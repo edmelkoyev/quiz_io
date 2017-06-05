@@ -1,1 +1,5 @@
-# quiz_io
+Running the demo
+
+```sh
+nodemon index.js
+```

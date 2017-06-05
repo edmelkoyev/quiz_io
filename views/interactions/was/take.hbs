@@ -1,0 +1,96 @@
+<div id="{{instanceKey}}" class="container">
+  <div id="main">
+  </div>
+</div>
+
+<script>
+  var _quizzes_source = null
+  const MESSAGE_TYPE_READY = `TAKE:{{instanceKey}}:READY`
+  const MESSAGE_TYPE_LOADED = `TAKE:{{instanceKey}}:LOADED`
+  const MESSAGE_TYPE_RESPONSE_UPDATE = `TAKE:{{instanceKey}}:RESPONSE_UPDATE`
+  const MESSAGE_TYPE_RENDERED = `TAKE:{{instanceKey}}:RENDERED`
+  const RECEIVED_MESSAGE_TYPE_INITIALIZE = `TAKE:{{instanceKey}}:INITIALIZE`
+  const _config = {
+    qid: null,
+    url: "https://was-public-app-poc-qa-elb-30017-1805734056.us-east-1.elb.amazonaws.com",    //WAS Services root url
+    context: "ab@ab.com",               //context
+    renderTitle: false,
+    state: null,
+    policies: null
+  }
+  $(document).ready(function() {
+  })
+  function find(selector) {
+    return $('#{{instanceKey}}').find(selector)
+  }
+  function postReady() {
+    if (!_quizzes_source)
+      return
+    _quizzes_source.postMessage({
+      type: MESSAGE_TYPE_READY
+    }, '*')
+  }
+  function postLoaded() {
+    if (!_quizzes_source)
+      return
+    _quizzes_source.postMessage({
+      type: MESSAGE_TYPE_LOADED
+    }, '*')
+  }
+  function postRendered(height) {
+    if (!_quizzes_source)
+      return
+    _quizzes_source.postMessage({
+      type: MESSAGE_TYPE_RENDERED,
+      height: height
+    }, '*')
+  }
+  function postDataChanged(state) {
+    if (!_quizzes_source)
+      return
+    console.log(`take postDataChanged for take`)
+    console.log(state)
+    console.log(JSON.stringify(state))
+    _quizzes_source.postMessage({
+      type: MESSAGE_TYPE_RESPONSE_UPDATE,
+      userResponse: {
+        value: state
+      }
+    }, '*')
+  }
+  var _initialized = false;
+  function handleInitialData(itemBody, interactionData, userResponse) {
+    console.log(`take handleInitialData ${event.data.itemBody}`)
+    if (!interactionData || !interactionData.qid || !interactionData.policies)
+      return
+    // TODO: add another handshake for when the wrapper should post the initial data
+    if (!_initialized || (interactionData.qid != _config.qid)) {
+      _config.qid = interactionData.qid;
+      _config.policies = interactionData.policies;
+      _initialized = true;
+      window.WAS.player.onLoad(function() {
+        $('#main').html('');
+        var question = window.WAS.createQuestion('#main', _config)
+        .on('questionLoaded', function() {
+          postRendered(document.body.scrollHeight)
+        })
+        .on('questionStateChange', postDataChanged)
+        .render();
+      })
+    }
+  }
+  function receiveMessage(event) {
+    // TODO: Add event.origin logic here
+    // if (event.origin !== 'http://localhost:8080')
+    //   return
+    switch (event.data.type) {
+      case RECEIVED_MESSAGE_TYPE_INITIALIZE:
+        handleInitialData(event.data.itemBody, event.data.interactionData, event.data.userResponse)
+        _quizzes_source = event.source
+        break
+      default:
+        break
+    }
+  }
+  window.addEventListener('message', receiveMessage, false)
+</script>

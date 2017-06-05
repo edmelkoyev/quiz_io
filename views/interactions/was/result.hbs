@@ -1,0 +1,82 @@
+<div class="container">
+  <div id="main">
+  </div>
+</div>
+
+<script>
+  var _quizzes_source = null
+  const MESSAGE_TYPE_READY = `RESULT:{{instanceKey}}:READY`
+  const MESSAGE_TYPE_LOADED = `RESULT:{{instanceKey}}:LOADED`
+  const MESSAGE_TYPE_RENDERED = `RESULT:{{instanceKey}}:RENDERED`
+  const RECEIVED_MESSAGE_TYPE_INITIALIZE = `RESULT:{{instanceKey}}:INITIALIZE`
+  $(document).ready(function() {
+  })
+  var _config = {
+    qid: null,
+    url: "https://was-public-app-poc-qa-elb-30017-1805734056.us-east-1.elb.amazonaws.com",    //WAS Services root url
+    context: "ab@ab.com",               //context
+    renderTitle: false,
+    state: null,
+    renderMode: "passive",
+    policies: null
+  }
+  function postReady() {
+    if (!_quizzes_source)
+      return
+    _quizzes_source.postMessage({
+      type: MESSAGE_TYPE_READY
+    }, '*')
+  }
+  function postLoaded() {
+    if (!_quizzes_source)
+      return
+    _quizzes_source.postMessage({
+      type: MESSAGE_TYPE_LOADED
+    }, '*')
+  }
+  function postRendered(height) {
+    if (!_quizzes_source)
+      return
+    _quizzes_source.postMessage({
+      type: MESSAGE_TYPE_RENDERED,
+      height: height
+    }, '*')
+  }
+  var _initialized = false;
+  function handleInitialData(itemBody, interactionData, scoredData, userResponse) {
+    if (!interactionData.qid || !interactionData.policies || !userResponse.value)
+      return
+    if (!_initialized || (interactionData.qid != _config.qid) || !_.isEqual(userResponse.value, _config.state)) {
+      _config.qid = interactionData.qid;
+      _config.policies = interactionData.policies;
+      _config.state = userResponse.value;
+      console.log('userResponse')
+      console.log(userResponse)
+      console.log(JSON.stringify(userResponse))
+//    {"value":{"context":"ab@ab.com","policies":{"evaluationPolicy":{"numericPolicy":{"defaultTolerance":2,"enableQuestionLevelSignificantDigits":false,"significantDigitsHelp":"passive","enableQuestionLevelTolerance":true,"significantDigitsInfo":"generic","showToleranceInfo":true},"unitsWeight":0.5},"dueDatePolicy":{"dueDate":"2017-12-30T08:00:00Z","penalty":0.3,"afterDueDateAccess":"markLate"},"attemptPolicy":{"algorithmCalculationMode":"sameValues","attemptPenalty":{"attempt":2,"penalty":0},"maxAttempts":5},"feedbackPolicy":{"sinceDate":"2017-12-30T08:00:00Z"},"hideTitle":false,"assistancePolicies":[{"assistanceType":"answer","availableSinceAttempt":1,"penalty":0},{"assistanceType":"reference","availableSinceAttempt":1,"penalty":0},{"assistanceType":"hint","availableSinceAttempt":1,"penalty":0},{"assistanceType":"solution","availableSinceAttempt":1,"penalty":0},{"assistanceType":"listOfAccounts","availableSinceAttempt":1,"penalty":0},{"assistanceType":"tutorial","availableSinceAttempt":1,"penalty":0}],"showWorkPolicy":"disable"},"algorithmResult":null,"id":"d20eadea-9228-4de7-bb9b-0476940ecc47","masterQuestionId":"res_Practice_Ch3_Kimmel_rtf_23","attempts":[{"itemResults":[{"feedback":"correct_fb","score":1,"mediaVariables":null,"availableAssistances":[{"type":"answer","penalty":0,"used":false},{"type":"reference","penalty":0,"used":false},{"type":"hint","penalty":0,"used":false}],"id":"res_Practice_Ch3_Kimmel_rtf_23","responseVariables":[{"score":1,"baseType":"identifier","correctResponse":{"alternatives":null,"values":[null]},"modified":false,"candidateResponse":{"values":["res_Practice_Ch3_Kimmel_rtf_23_0_3"]},"id":"res_Practice_Ch3_Kimmel_rtf_23_0","choiceSequence":["res_Practice_Ch3_Kimmel_rtf_23_0_1","res_Practice_Ch3_Kimmel_rtf_23_0_3","res_Practice_Ch3_Kimmel_rtf_23_0_2","res_Practice_Ch3_Kimmel_rtf_23_0_0"]}]}],"masterQuestionId":"res_Practice_Ch3_Kimmel_rtf_23","sessionStatus":"final","number":1,"itemId":"res_Practice_Ch3_Kimmel_rtf_23","maxAttemptNumber":5,"score":{"value":1},"id":null,"attemptPenalty":{"attempt":2,"penalty":0,"used":false}}]}}
+      _initialized = true;
+      window.WAS.player.onLoad(function() {
+        $('#main').html('');
+        var question = window.WAS.createQuestion('#main', _config)
+        .on('questionLoaded', function() {
+          postRendered(document.body.scrollHeight)
+        }).render();
+      })
+    }
+  }
+  // Called sometime after postMessage is called
+  function receiveMessage(event) {
+    // TODO: Add event.origin logic here
+    // if (event.origin !== 'http://localhost:8080')
+    //   return
+    switch (event.data.type) {
+      case RECEIVED_MESSAGE_TYPE_INITIALIZE:
+        handleInitialData(event.data.itemBody, event.data.interactionData, event.data.scoredData, event.data.userResponse)
+        _quizzes_source = event.source
+        break
+      default:
+        break
+    }
+  }
+  window.addEventListener('message', receiveMessage, false)
+</script>

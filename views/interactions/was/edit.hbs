@@ -1,0 +1,200 @@
+<div class="container">
+  <div>
+    <form>
+      <div>
+        <label for="qid">QID</label>
+        <select id="qid">
+          <option value="EAT_1489999372303_1_7232615307292738">#Aloha #Simple #Image Hello World</option>
+          <option value="EAT_1489999564983_1_8918880872646437">#Image #A11y Chapter 2, Section 3, Exercise 07</option>
+          <option value="EAT_1489999608695_1_3549645761327578">#Table #A11y Do It! Review 4-1</option>
+          <option value="EAT_1489999719615_1_3203307742387067">#Table #Heavy #A11y Accounting Cycle Review 4-3</option>
+          <option value="EAT_1489999949825_1_1243538637045682">#MathPad #A11y Chapter 06, Problem 028 SN</option>
+          <option value="EAT_1490000004399_1_5165288912794694">#MathPad #Heavy #A11y Chapter 06, Problem 016 SN</option>
+          <option value="EAT_1490000114871_1_4935383364534232">#LabelImage #A11y Chapter 11, Section 2, Practice Problem 11.2D</option>
+          <option value="ss17_youngca4e_c03_eos_097">#Aloha #MathML #Simple Chapter 3, Section 3.5, Question 022</option>
+          <option value="ss17_youngca4e_c03_eos_108">#MathML #Heavy Chapter 3, Section 3.5, Question 06</option>
+          <option value="ss17_youngca4e_c03_eos_126">#MathML #Heavy Chapter 3, Review Exercises, Question 047</option>
+          <option value="res_Practice_Ch3_Kimmel_rtf_23">#Aloha Practice Question 22</option>
+          <option value="EAT_1345545597246_0_17477578140433592">#Aloha Multiple Choice Question 84</option>
+          <option value="EAT_1434794381684_1_9363538178717514">#Simple #Table #A11y Exercise 4-1</option>
+          <option value="EAT_1435577358228_1_113046004604551">#Table #A11y Problem 4-5A</option>
+          <option value="EAT_1339262712033_0_4415240184851361">#MarvinJS #A11y Problem 6.40</option>
+          <option value="EAT_1343902565351_0_6486111950623078">#Simple #MarvinJS #A11y Prelecture, Question 10</option>
+          <option value="EAT_1344947847397_0_5409824934681167">#Table #Typeahead #A11y Brief Exercise 207</option>
+          <option value="EAT_1345091186948_0_8665505438735585">#Table #Dropdown #A11y Brief Exercise 208</option>
+          <option value="res_c11q_1_8">#Image #Table #A11y Chapter 11, Problem 008</option>
+          <option value="res_c11q_1_11">#Simple #A11y Chapter 11, Problem 010</option>
+          <option value="res_eprof05545_c12q_reading_questions_1_3">#Aloha Reading Question 12.03</option>
+          <option value="EAT_1437719781193_1_2987940518013188">#Table #A11y #Stepped Submission Problem 12-2A (Part Level Submission)</option>
+        </select>
+      </div>
+      <div>
+        <label for="policies">Policies</label>
+        <textarea id="policies" name="policies" rows="20" cols="100"></textarea>
+      </div>
+    </form>
+  </div>
+  <div id="main">
+  </div>
+</div>
+
+<script>
+  var _quizzes_source = null
+  const MESSAGE_TYPE_READY = `EDIT:{{instanceKey}}:READY`
+  const MESSAGE_TYPE_LOADED = `EDIT:{{instanceKey}}:LOADED`
+  const MESSAGE_TYPE_DATA_CHANGED = `EDIT:{{instanceKey}}:DATA_CHANGED`
+  const MESSAGE_TYPE_RENDERED = `EDIT:{{instanceKey}}:RENDERED`
+  const RECEIVED_MESSAGE_TYPE_INITIALIZE = `EDIT:{{instanceKey}}:INITIALIZE`
+  var _config = {
+    qid: null,
+    url: "https://was-public-app-poc-qa-elb-30017-1805734056.us-east-1.elb.amazonaws.com",    //WAS Services root url
+    context: "ab@ab.com",               //context
+    renderTitle: false,
+    state: null,
+    renderMode: "passive",
+    policies: null
+  }
+  var _defaultPolicies = {
+      "attemptPolicy": {
+          "maxAttempts": 5,
+          "algorithmCalculationMode": "sameValues",
+          "attemptPenalty" : {
+              "attempt" : 2,
+              "penalty" : 0
+          }
+      },
+      "assistancePolicies": [
+          {
+              "assistanceType": "answer",
+              "availableSinceAttempt": 1,
+              "penalty": 0
+          },
+          {
+              "assistanceType": "reference",
+              "availableSinceAttempt": 1,
+              "penalty": 0
+          },
+          {
+              "assistanceType": "hint",
+              "availableSinceAttempt": 1,
+              "penalty": 0
+          },
+          {
+              "assistanceType": "solution",
+              "availableSinceAttempt": 1,
+              "penalty": 0
+          },
+          {
+              "assistanceType": "listOfAccounts",
+              "availableSinceAttempt": 1,
+              "penalty": 0
+          },
+          {
+              "assistanceType": "tutorial",
+              "availableSinceAttempt": 1,
+              "penalty": 0
+          }
+      ],
+      "dueDatePolicy": {
+          "dueDate": "2017-12-30T08:00:00.000Z",
+          "afterDueDateAccess": "markLate",
+          "penalty": 0.3
+      },
+      "hideTitle": false,
+      "feedbackPolicy": {"sinceDate": "2017-12-30T08:00:00.000Z"},
+      "showWorkPolicy": "disable",
+      "evaluationPolicy": {
+          "unitsWeight": 0.5,
+          "numericPolicy": {
+              "defaultTolerance": 2,
+              "enableQuestionLevelTolerance": true,
+              "enableQuestionLevelSignificantDigits": false,
+              "showToleranceInfo": true,
+              "significantDigitsInfo": "generic",
+              "significantDigitsHelp": "passive"
+          }
+      }
+  }
+  $(document).ready(function() {
+    $('#policies').change(postDataChanged)
+    $('#qid').change(postDataChanged)
+    $('#policies').val(JSON.stringify(_defaultPolicies))
+  })
+  function postReady() {
+    if (!_quizzes_source)
+      return
+    _quizzes_source.postMessage({
+      type: MESSAGE_TYPE_READY,
+      height: document.body.scrollHeight
+    }, '*')
+  }
+  function postLoaded() {
+    if (!_quizzes_source)
+      return
+    _quizzes_source.postMessage({
+      type: MESSAGE_TYPE_LOADED
+    }, '*')
+  }
+  function postRendered(height) {
+    if (!_quizzes_source)
+      return
+    _quizzes_source.postMessage({
+      type: MESSAGE_TYPE_RENDERED,
+      height: height
+    }, '*')
+  }
+  function postDataChanged() {
+    if (!_quizzes_source)
+      return
+    const itemBody = 'Filler'
+    var qid = $('#qid').val();
+    var policies = $('#policies').val();
+    _quizzes_source.postMessage({
+      type: MESSAGE_TYPE_DATA_CHANGED,
+      itemBody: itemBody,
+      interactionData: {
+        qid: qid,
+        policies: JSON.parse(policies)
+      },
+      scoringData: {
+        value: ''
+      }
+    }, '*')
+    if (qid && policies) {
+      window.WAS.player.onLoad(function() {
+        _config.qid = qid;
+        _config.policies = JSON.parse(policies);
+        $('#main').html('');
+        var question = window.WAS.createQuestion('#main', _config)
+        .on('questionLoaded', function() {
+          postRendered(document.body.scrollHeight)
+        }).render();
+      })
+    }
+  }
+  function handleInitialData(itemBody, interactionData, scoringData) {
+    // TODO:
+    if (event.data && event.data.interactionData && event.data.interactionData.policies) {
+      $('#policies').val(JSON.stringify(event.data.interactionData.policies))
+    }
+    if (event.data && event.data.interactionData && event.data.interactionData.qid) {
+      $('#qid').val(event.data.interactionData.qid)
+    }
+  }
+  function receiveMessage(event) {
+    // TODO: Add event.origin logic here
+    // if (event.origin !== 'http://localhost:8080')
+    //   return
+    switch (event.data.type) {
+      case RECEIVED_MESSAGE_TYPE_INITIALIZE:
+        console.log('edit initial data')
+        handleInitialData(event.data.itemBody, event.data.interactionData, event.data.scoringData)
+        _quizzes_source = event.source
+        postReady()
+        break
+      default:
+        break
+    }
+  }
+  window.addEventListener('message', receiveMessage, false)
+</script>
